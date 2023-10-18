@@ -15,3 +15,15 @@ export const inSprint = function(date: Date): boolean {
   return date.getDate() > firstSprintDate.getDate();
 }
 export const isToday = (date: Date): boolean => sameDay(date, new Date()); 
+
+// 231019 into 2023-10-19
+export const convertSimpleDate = (d: string, t?: string): Date => {
+    if (t!!) {
+        return new Date (`20${d.slice(0, 2)}-${d.slice(2, 4)}-${d.slice(4, 6)} ${t.slice(0, t.length-2)}:${t.slice(-2)}`);
+    } else {
+        return new Date (`20${d.slice(0, 2)}-${d.slice(2, 4)}-${d.slice(4, 6)}`);
+    }
+}
+
+export const simpleDate = (d: Date): string => `${d.getFullYear().toString().slice(2)}${(new Date()).getMonth() + 1}${d.getDate()}`;
+export const simpleTime = (d: Date): string => `${d.getHours()}${d.getMinutes()}`;

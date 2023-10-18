@@ -1,7 +1,6 @@
 import { Status } from 'model/status';
-import { Editor, Platform, Plugin } from 'obsidian';
+import { Editor, Plugin } from 'obsidian';
 import { DEFAULT_SETTINGS } from 'settings';
-import { updateTaskFromEditor } from 'service/modify-task.service';
 import * as app from 'state/app.state';
 import * as settings from 'state/settings.state';
 import * as statusBar from 'service/status-bar.service';
@@ -9,8 +8,6 @@ import * as dv from 'service/data-view.service';
 import * as wait from 'service/wait.service';
 import { TaskToggleModal } from 'task-toggle-modal';
 import { getLogFileName } from 'service/logging.service';
-import { convertStaskToTask } from 'model/task.model';
-import { STask } from 'obsidian-dataview';
 
 // due to limitations of obsidian adding icons, I must use icon swapper and inject new svgs to get icons I want
 const circleAIcon = "dot-network";
@@ -45,7 +42,8 @@ export default class TaskTrackingPlugin extends Plugin {
 		if (!!check) {
 			return !!editor;
 		}
-		updateTaskFromEditor(editor, status);
+		// todo
+		// updateTaskFromEditor(editor, status);
 	};
 }
 

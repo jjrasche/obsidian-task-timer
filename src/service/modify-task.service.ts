@@ -1,5 +1,5 @@
 import { Status, StatusIndicator } from "model/status"
-import { Task, convertTaskLineToTask } from "model/task.model";
+import { Task, convertTaskLineToTask, taskToLine } from "model/task.model";
 import { Editor, EditorPosition } from "obsidian"
 import * as app from 'state/app.state';
 import * as statusBar from 'service/status-bar.service';
@@ -13,17 +13,27 @@ export const updateTaskFromEditor = async (editor: Editor, status: Status) => {
     const task = convertTaskLineToTask(taskLine);
     await changeTaskStatus(task, status);
 }
- 
+
 
 export const changeTaskStatus = async (task: Task, status: Status) => {
     // do not add the same status as current status
-    if (task.status === status) {
+    if (task.status === status ||
+        (task.status === Status.Inactive && status === Status.Complete) ||
+        (task.status === Status.Complete && status === Status.Inactive)
+    ){
         return;
     }
-    
+
+    if (status === Status.Active) {
+        task.startTime = new Date();
+    } else {
+        task.timeTaken = (task.timeTaken ?? 0) + (!!task.startTime ? Math.round((Date.now() - task.startTime.getTime()) / (1000*60)) : 0);
+    }
     task.status = status;
-    await saveTaskLine();
+
+    await saveTaskLine(task);
     // statusBar.modify(task);
+    // consider need to update allTasks or can I trigger data view refresh???
 }
 
 const getTaskLineByCursor = (editor: Editor): string => {
@@ -36,19 +46,17 @@ const getTaskLineByCursor = (editor: Editor): string => {
 }
 
 
-const saveTaskLine = async () => {
-    // let originalContent = await file.read(task.path);
-    // const lines = originalContent.split("\n")
-    // const originalLine = lines[task.line];
-    // const newLine = task.toString();
-    // lines[task.line] = newLine
-    // const updatedContent = lines.join("\n");
-    // await file.write(task.path, updatedContent);
-    // // mark task and wait for dataview to update its task list to prevent race conditions of altering source prior to task objects updating
-    // task.dirty = false;
-    // task.saved = true;
-    // sourceUpdateWaits.push(wait.until(() => dv.taskInDv(task.id), () => {}, 500));
-    // await log.toConsoleAndFile(`updated task source: ${task.toLog()}\tfrom:'${originalLine}'\tupdated:${newLine}`);
+const saveTaskLine = async (task: Task) => {
+    // going to assume I'm writing to the correct line until I see it being a problem
+    let originalContent = await file.read(task.path);
+    const lines = originalContent.split("\n")
+    const originalLine = lines[task.lineNum];
+    const newLine = taskToLine(task);
+    lines[task.lineNum] = newLine
+    const updatedContent = lines.join("\n");
+    await file.write(task.path, updatedContent);
+    // mark task and wait for dataview to update its task list to prevent race conditions of altering source prior to task objects updating
+    await log.toConsoleAndFile(`updating task in line:${task.lineNum} in file:"${task.path}\n\tfrom:${originalLine}\n\tto:${newLine}"`);
 }
 
 export const inactivateAllActiveTasks = async () => { }
