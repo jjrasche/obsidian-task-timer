@@ -1,11 +1,12 @@
 import { StatusWord } from "model/status";
 import { Task } from "model/task.model";
 import { SuggestModal } from "obsidian";
+import { allTasks } from "service/data-view.service";
 
 export class TaskToggleModal extends SuggestModal<Task> {
 	async getSuggestions(query: string): Promise<any[]> {
 		// todo: get all tasks with metadata
-		const tasks: any[] = [];
+		const tasks: any[] = allTasks();
 		return tasks.filter((task) =>
 			task.text.toLowerCase().includes(query.toLowerCase())
 		);

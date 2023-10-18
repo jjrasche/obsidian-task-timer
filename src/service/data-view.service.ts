@@ -11,5 +11,8 @@ export const api = (): DataviewApi => {
 }
 
 export const ready = (): boolean => !!api() && !!api().pages() && api().pages().length > 0;
-export const allTasks: () => STask[] = () => api().pages().file.tasks as STask[];
-export const allManagedTasks: () => STask[] = () => allTasks().filter(t => t.text.contains("etc:"));
+// export const allTasks: () => STask[] = () => api().pages().file.tasks as STask[];
+export const allTasks: () => STask[] = () => {
+   const t = api().pages().file.tasks.filter((t: STask) => t.text.contains("etc:"))
+    return t;
+}

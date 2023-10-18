@@ -1,3 +1,4 @@
+import { STask } from "obsidian-dataview";
 import { Status } from "./status";
 
 export class Task {
@@ -6,6 +7,9 @@ export class Task {
 	timeTaken: number;
 	estimateTimeToCompletion: number;
 	startTime: Date;
+	file: string;
+	lineNum: number;
+
 
 	get timeEllapsed() {
 		return (this.timeTaken ?? 0) + (Date.now() - this.startTime.getTime())
@@ -18,6 +22,12 @@ export class Task {
 
 export const convertTaskLineToTask = (line: string): Task => {
 	return new Task();
+}
+
+export const convertStaskToTask = (stask: STask): Task => {
+	let task = new Task();
+	// task.name = 
+	return task;
 }
 
 export const convertTaskToLine = (task: Task): string => {

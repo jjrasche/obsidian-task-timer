@@ -1,5 +1,5 @@
 import { Task } from "model/task.model";
-import { updateTaskFromClick } from "service/modify-task.service";
+// import { updateTaskFromClick } from "service/modify-task.service";
 
 let _statusBar: HTMLElement;
 
