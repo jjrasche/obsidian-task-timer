@@ -1,6 +1,5 @@
 import { Task } from "model/task.model";
 import { updateTaskFromClick } from "service/modify-task.service";
-import * as tasks from 'state/tasks.state';
 
 let _statusBar: HTMLElement;
 

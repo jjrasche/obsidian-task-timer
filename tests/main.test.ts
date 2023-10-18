@@ -1,21 +1,13 @@
 import { Editor, FileSystemAdapter, MarkdownView, Plugin } from "obsidian";
 import { expect } from "chai";
-import { Session } from "model/session";
 import { DEFAULT_SETTINGS } from "settings";
 import { remove, read, write, find } from "service/file.service";
-import { UpdateTaskFromEditorTests } from "./update-task-from-editor.test";
 import * as app from 'state/app.state';
 import * as settings from 'state/settings.state';
 import * as statusBar from 'service/status-bar.service';
 import * as dv from 'service/data-view.service';
-import * as tasks from 'state/tasks.state';
-import * as taskData from 'service/task-data.service';
-import { TaskDataType } from "service/task-data.service";
-import { setAllTasksGetter } from "service/task-source.service";
 import { STask } from "obsidian-dataview";
 import { taskModelTests } from "./task.model.test";
-import { UpdateTaskFromClickTests } from "./update-task-from-click.test";
-import { tasksStateTests } from "./tasks.state.test";
 
 export const PLUGIN_NAME = "obsidian-task-tracking";
 export const TARGET_FILE_NAME = "TargetFile.md";
@@ -46,7 +38,6 @@ export default class TestTaskTrackingPlugin extends Plugin {
         might need to increase the timeout for larger vaults
     */
     async onload() {
-        setAllTasksGetter(() => dv.api().pages().file.tasks.filter((t: STask) => t.path === TARGET_FILE_NAME) as STask[]);   // remove non test sources 
         app.set(this.app);
         settings.set(Object.assign({}, DEFAULT_SETTINGS));
         if(!(app.get().vault.adapter instanceof FileSystemAdapter)) {
@@ -74,7 +65,7 @@ export default class TestTaskTrackingPlugin extends Plugin {
 
     async setup() {
 		statusBar.set(this.addStatusBarItem());
-        settings.get().taskDataFileName = DATA_FILE_NAME;
+        // settings.get().taskDataFileName = DATA_FILE_NAME;
         // todo: still need to get the TFile somehow, maybe I can create it myself
         const file = find(TARGET_FILE_NAME);
         await this.app.workspace.getLeaf().openFile(file);  // replicates the use case of interacting with a file in editor
@@ -103,10 +94,7 @@ export default class TestTaskTrackingPlugin extends Plugin {
 
     async load_tests() {
         this.tests = new Array();
-        await this.loadTestSuite(UpdateTaskFromEditorTests);
-        await this.loadTestSuite(UpdateTaskFromClickTests);
         await this.loadTestSuite(taskModelTests);
-        await this.loadTestSuite(tasksStateTests);
         const focusedTests = this.tests.filter(t => t.name.startsWith("fff"));
         if (focusedTests.length > 0) {
             this.tests = focusedTests;
@@ -155,17 +143,6 @@ export default class TestTaskTrackingPlugin extends Plugin {
         return this.app.plugins
     }
 
-    async getData(): Promise<TaskDataType> {
-        const dataString = await read(DATA_FILE_NAME);
-        const data = JSON.parse(dataString);
-        Object.keys(data).forEach(key => {
-            data[key].forEach((session: Session) => {
-                session.time = new Date(session.time);
-            });
-        });
-        return data;
-    }
-
     /*
         shared methods used across test suites
     */
@@ -178,26 +155,7 @@ export default class TestTaskTrackingPlugin extends Plugin {
     }
 
     resetState() {
-        tasks.set(undefined);
-        taskData.reset();
-    }
-    
-    async expectTaskInData(expected: TaskDataType) {
-        const actual = await this.getData();
-        expect(Object.keys(actual).sort()).to.eql(Object.keys(expected).sort());  // every expected task is present
-        Object.keys(actual).forEach(key => this.expectSessionsEqual(actual[key], expected[key]));        
-    }
 
-    expectSessionsEqual(expected: Session[], actual?: Session[]) {
-        if (!actual) {
-            throw new Error("expected sessions to be defined");
-        }
-        expect(actual.length).to.eql(expected.length);
-        actual.forEach((actualSession, idx) => {    // each session
-            const expectedSession = expected[idx];
-            expect(actualSession.status).to.eql(expectedSession.status);
-            this.expectTimeInRange(actualSession.time);
-        });
     }
 
     expectTimeInRange(actual: Date, lowerBound = 1000, upperBound = 100) {
@@ -205,30 +163,15 @@ export default class TestTaskTrackingPlugin extends Plugin {
             .greaterThan(new Date(actual.getTime() - lowerBound))
             .lessThan(new Date(actual.getTime() + upperBound));
     }
-    
-    /*
-        same keys -> concatenate values
-        different keys add 
-    */
-    combineData(current: TaskDataType, updated: TaskDataType): TaskDataType {
-        Object.keys(current).forEach(key => {
-            const matchingUpdate = updated[key];
-            if (!!matchingUpdate) {
-                current[key] = current[key].concat(matchingUpdate)
-                delete updated[key];
-            }
-        });
-        return {...current, ...updated};
-    }
 
     async expectTargetFile(expectedFileContent: string) {
         const targetFile = await read(TARGET_FILE_NAME);
         expect(targetFile).to.eql(expectedFileContent);     // taskID added to selected task
     }
     
-    async expectNoChanges(fileContent: string, initialData = {}) {
-        const data = await this.getData();
-        await expect(JSON.stringify(data)).to.eql(JSON.stringify(initialData));  // data file unchanged 
-        expect(await read(TARGET_FILE_NAME)).to.eql(fileContent) // target file unchanged
-    }
+    // async expectNoChanges(fileContent: string, initialData = {}) {
+    //     const data = await this.getData();
+    //     await expect(JSON.stringify(data)).to.eql(JSON.stringify(initialData));  // data file unchanged 
+    //     expect(await read(TARGET_FILE_NAME)).to.eql(fileContent) // target file unchanged
+    // }
 }

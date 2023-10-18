@@ -6,7 +6,6 @@
     "module": "ESNext",
     "jsx": "react",
     "target": "ES6",
-    "allowJs": true,
     "noImplicitAny": true,
     "noImplicitThis": true,
 	  "strictNullChecks": true,

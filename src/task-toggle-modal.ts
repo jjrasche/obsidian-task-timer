@@ -1,7 +1,6 @@
 import { StatusWord } from "model/status";
 import { Task } from "model/task.model";
 import { SuggestModal } from "obsidian";
-import { updateTaskFromClick } from "service/modify-task.service";
 
 export class TaskToggleModal extends SuggestModal<Task> {
 	async getSuggestions(query: string): Promise<any[]> {
@@ -14,11 +13,11 @@ export class TaskToggleModal extends SuggestModal<Task> {
 
 	// Renders each suggestion item.
 	renderSuggestion(task: Task, el: HTMLElement) {
-		el.createEl("div", { text: `${task.text} (${StatusWord[task.status?? 2]}) - ${task.timeSpent}` });
+		el.createEl("div", { text: `(${StatusWord[task.status?? 0]}) ${task.name} - ${task.timeLeft}` });
 	}
 
 	// Perform action on the selected suggestion.
 	onChooseSuggestion(task: Task, evt: MouseEvent | KeyboardEvent) {
-		updateTaskFromClick(task.id);
+		// updateTaskFromClick(task.id);
 	}
 }
