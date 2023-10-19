@@ -5,6 +5,7 @@ import { convertSimpleDate, simpleDate, simpleTime } from "../service/date.servi
 export class Task {
 	phrase: string;
 	originalStatus: string;
+	tabs: string = "";
 	link?: string;
 	status: Status;
 	timeTaken?: number;
@@ -16,6 +17,7 @@ export class Task {
 	constructor(task: Task = {} as Task) {
 		this.phrase = task.phrase ?? this.phrase;
 		this.originalStatus = task.originalStatus ?? this.originalStatus;
+		this.tabs = task.tabs ?? this.tabs;
 		this.link = task.link ?? this.link;
 		this.status = task.status ?? this.status;
 		this.timeTaken = task.timeTaken ?? this.timeTaken;
@@ -24,30 +26,40 @@ export class Task {
 		this.path = task.path ?? this.path;
 		this.lineNum = task.lineNum ?? this.lineNum;
 	}
+	get now() { return new Date().getTime(); }
 
-	get timeEllapsed() {
-		if (!!this.startTime) {
-			return (this.timeTaken ?? 0) + (Date.now() - this.startTime.getTime())
-		}
+	get timeSinceActive() {
+		const t = Math.round(this.now - (this.startTime?.getTime() ?? 0));
+		return !!this.startTime ? Math.round((this.now - this.startTime.getTime()) / (1000*60)) : 0
+	}
+	get timeEllapsed() { 
+		return this.status == Status.Active ? this.timeSinceActive : 0
 	}
 
 	get timeLeft() {
-		if (!!this.etc && !!this.timeEllapsed) {
-			return this.etc -  this.timeEllapsed;
+		if (!!this.etc) {
+			const timeSpent = ((this.timeTaken ?? 0) + this.timeEllapsed);
+			return this.etc - timeSpent;
 		}
+		return 0;
 	}
-}
 
-export const convertTaskLineToTask = (line: string): Task => {
-	// todo
-	return new Task();
+	get overTime() {
+		if (!this.etc) return false;
+		return this.timeLeft < 0;
+	}
+	get nearOver() {
+		if (!this.etc) return false;
+		const percentTimeLeft = this.timeLeft / this.etc;
+		return percentTimeLeft < .1;
+	}
 }
 
 export const staskToTask = (stask: STask): Task => {
 	let task = new Task();
 	let text = stask.text;
 	task.path = stask.path;
-	// todo: handle indents correctly
+	task.tabs = [...Array(stask?.position?.start?.col ?? 0)].reduce((acc) => acc += "\t", "") ?? "";
 	task.lineNum = stask.line;
 	[text, task.startTime] = [...pullStart(text)]; 
 	[text, task.etc] = [...pullEtc(text)]; 
@@ -62,12 +74,13 @@ export const staskToTask = (stask: STask): Task => {
 export const taskToLine = (task: Task): string => {
 	const d = !!task.startTime ? " d:" + simpleDate(task.startTime) : "";
 	const s = !!task.startTime ? " s:" + simpleTime(task.startTime) : "";
-	const e = !!task.etc ? " e:" + task.etc : "";
+	const e = !!task.etc ? " etc:" + task.etc : "";
 	const t = !!task.timeTaken ? " t:" + task.timeTaken : "";
 	const link = !!task.link ? " " + task.link : "";
-	return `- [${StatusIndicator[task.status]}] ${task.phrase}${d}${s}${e}${t}${link}`;
+	return `${task.tabs}- [${StatusIndicator[task.status]}] ${task.phrase}${d}${s}${e}${t}${link}`;
 }
 
+export const taskToStausBar = (task: Task): string => `${task.phrase} ${task.timeLeft}`;
 
 /*
 	pullers: used to take metadata out of a string and return the formatted value of that metadata
@@ -78,7 +91,7 @@ export const pullStart = (str: string): [string, Date?] => {
 	[str, t]  = pullMetadata(str, /s\:[0-9]{3,4}/g);
 	return [str, d ? convertSimpleDate(d, t) : undefined];
 }
-export const pullEtc = (str: string) => pullMetadataNumber(str, /e\:[0-9]{1,3}/g)
+export const pullEtc = (str: string) => pullMetadataNumber(str, /etc\:[0-9]{1,3}/g)
 export const pullTimeTaken = (str: string) => pullMetadataNumber(str, /t\:[0-9]{1,3}/g);
 export const pullLink = (str: string) => pullMetadata(str, /\^[a-z0-9]{6}/g, (str) => str);
 

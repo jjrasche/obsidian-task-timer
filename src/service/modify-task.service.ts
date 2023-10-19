@@ -1,19 +1,17 @@
-import { Status, StatusIndicator } from "model/status"
-import { Task, convertTaskLineToTask, taskToLine } from "model/task.model";
-import { Editor, EditorPosition } from "obsidian"
-import * as app from 'state/app.state';
-import * as statusBar from 'service/status-bar.service';
-import * as log from 'service/logging.service';
-import * as file from "service/file.service";
+import { Status } from "../model/status"
+import { Task, taskToLine } from "../model/task.model";
+import { Editor } from "obsidian"
+import * as log from './logging.service';
+import * as statusBar from './status-bar.service';
+import * as file from "./file.service";
+import { getTaskByCursor } from "./data-view.service";
 
 const isTask = (line: string): boolean => !!line.match(/^\t*- \[.{1}\]\s/g);
 
 export const updateTaskFromEditor = async (editor: Editor, status: Status) => {
-    const taskLine = getTaskLineByCursor(editor);
-    const task = convertTaskLineToTask(taskLine);
+    const task = getTaskByCursor(editor);
     await changeTaskStatus(task, status);
 }
-
 
 export const changeTaskStatus = async (task: Task, status: Status) => {
     // do not add the same status as current status
@@ -32,17 +30,8 @@ export const changeTaskStatus = async (task: Task, status: Status) => {
     task.status = status;
 
     await saveTaskLine(task);
-    // statusBar.modify(task);
+    statusBar.changeTask(task);
     // consider need to update allTasks or can I trigger data view refresh???
-}
-
-const getTaskLineByCursor = (editor: Editor): string => {
-    const cursor = editor.getCursor();
-    if (!cursor) throw new Error("didn't find an acitve cursor");
-    const line = editor.getLine(cursor.line);
-    if (!line) throw new Error("no active cursor");
-    if (!isTask(line)) throw new Error("cursor not on line that is NOT a task");
-    return line;
 }
 
 

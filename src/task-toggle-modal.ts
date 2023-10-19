@@ -1,20 +1,21 @@
 import { Status, StatusWord } from "model/status";
 import { Task } from "model/task.model";
 import { SuggestModal } from "obsidian";
-import { allTasks } from "service/data-view.service";
+import { allTasks, managedTasks } from "service/data-view.service";
 import { changeTaskStatus } from "./service/modify-task.service";
+import { simpleDate, simpleTime } from "./service/date.service";
 
 export class TaskToggleModal extends SuggestModal<Task> {
 	async getSuggestions(query: string): Promise<any[]> {
-		const tasks = allTasks();
-		return tasks.filter((task) =>
-			task.phrase.toLowerCase().includes(query.toLowerCase())
-		);
+		console.log(allTasks().length)
+		console.log(managedTasks().length)
+		return managedTasks()
+			.filter((task) => task.phrase.toLowerCase().includes(query.toLowerCase()) && task.status != Status.Complete)
 	}
 
 	// Renders each suggestion item.
 	renderSuggestion(task: Task, el: HTMLElement) {
-		el.createEl("div", { text: `(${StatusWord[task.status?? 0]}) ${task.phrase} - ${task.timeLeft}` });
+		el.createEl("div", { text: `(${StatusWord[task.status?? 0]}) ${task.phrase} (${task.timeLeft})` });
 	}
 
 	// Perform action on the selected suggestion.
