@@ -1,6 +1,6 @@
 import { STask } from "obsidian-dataview";
-import { Status, StatusIndicator, indicatorToStatus } from "./status";
-import { convertSimpleDate, simpleDate, simpleTime } from "../service/date.service";
+import { Status, StatusIndicator, StatusWord, indicatorToStatus } from "./status";
+import { convertSimpleDate, sameDay, simpleDate, simpleDisplayDate, simpleDisplayTime, simpleTime } from "../service/date.service";
 
 export class Task {
 	phrase: string;
@@ -12,7 +12,7 @@ export class Task {
 	etc?: number;
 	startTime?: Date;
 	path: string;
-	lineNum: number;
+	line: number;
 
 	constructor(task: Task = {} as Task) {
 		this.phrase = task.phrase ?? this.phrase;
@@ -24,7 +24,7 @@ export class Task {
 		this.etc = task.etc ?? this.etc;
 		this.startTime = task.startTime ?? this.startTime;
 		this.path = task.path ?? this.path;
-		this.lineNum = task.lineNum ?? this.lineNum;
+		this.line = task.line ?? this.line;
 	}
 	get now() { return new Date().getTime(); }
 
@@ -53,14 +53,18 @@ export class Task {
 		const percentTimeLeft = this.timeLeft / this.etc;
 		return percentTimeLeft < .1;
 	}
+	
+	get displayString() { 
+		return `{'phrase':'${this.phrase}', 'originalStatus':'${this.originalStatus}', 'tabs':'${this.tabs}', 'link':'${this.link}', 'status':'${this.status}', 'timeTaken':'${this.timeTaken}', 'etc':'${this.etc}', 'startTime':'${this.startTime}', 'path':'${this.path}', 'line':'${this.line}}'`;
+	}
 }
 
 export const staskToTask = (stask: STask): Task => {
 	let task = new Task();
-	let text = stask.text;
+	let text = stask.text.split("\n")[0];
 	task.path = stask.path;
 	task.tabs = [...Array(stask?.position?.start?.col ?? 0)].reduce((acc) => acc += "\t", "") ?? "";
-	task.lineNum = stask.line;
+	task.line = stask.line;
 	[text, task.startTime] = [...pullStart(text)]; 
 	[text, task.etc] = [...pullEtc(text)]; 
 	[text, task.timeTaken] = [...pullTimeTaken(text)]; 
@@ -79,8 +83,9 @@ export const taskToLine = (task: Task): string => {
 	const link = !!task.link ? " " + task.link : "";
 	return `${task.tabs}- [${StatusIndicator[task.status]}] ${task.phrase}${d}${s}${e}${t}${link}`;
 }
-
-export const taskToStausBar = (task: Task): string => `${task.phrase} ${task.timeLeft}`;
+// `A 18:00 (-14) blah`
+export const taskToStausBar = (t: Task): string => `${t.phrase} ${t.timeLeft}`;
+export const taskToSelect = (t: Task): string => `${StatusWord[t.status?? 0][0]} ${simpleDisplayTime(t.startTime)} (${t.timeLeft}) ${t.phrase}`;
 
 /*
 	pullers: used to take metadata out of a string and return the formatted value of that metadata

@@ -7,12 +7,12 @@ export const getLogFileName = () => `.obsidian/plugins/obsidian-task-timer/log($
 
 export const toConsoleAndFile = async (message: string) => {
 	console.log(message);
-	await file.append(settings.get().logFileName, `${date.nowIso()}\ti\t${message}\n`);
+	await file.append(settings.get().logFileName, `${date.readableNow()}\ti\t${message}\n`);
 }
 
 export const errorToConsoleAndFile = async (message: string, shouldThrow = false) => {
 	console.error(message);
-	await file.append(settings.get().logFileName, `${date.nowIso()}\te\t${message}\n`);
+	await file.append(settings.get().logFileName, `${date.readableNow()}\te\t${message}\n`);
 	if (shouldThrow) {
 		throw new Error(message);
 	}

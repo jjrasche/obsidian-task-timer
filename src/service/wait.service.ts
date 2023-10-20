@@ -1,6 +1,5 @@
-export async function until(ready: () => boolean, callback: () => void, interval = 1000): Promise<void> {
+export async function until(ready: () => boolean, callback: () => void, maxAttempts = 5, interval = 1000): Promise<void> {
     return await new Promise(resolve => {
-        let maxAttempts = 30;
         const start = new Date();
         const intervalID = setInterval(() => {
             if (ready()) {
@@ -14,7 +13,7 @@ export async function until(ready: () => boolean, callback: () => void, interval
             if (maxAttempts == 0) {
                 seconds = (new Date()).getTime() - start.getTime();
                 console.log(`reached max attempts of ${maxAttempts} after ${seconds} seconds`);
-                clearInterval(intervalID);
+                `clearInterval(intervalID);`
                 resolve();
             }
         }, interval);

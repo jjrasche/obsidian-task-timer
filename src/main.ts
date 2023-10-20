@@ -1,5 +1,5 @@
 import { Status } from 'model/status';
-import { Editor, Plugin } from 'obsidian';
+import { Editor, Plugin, TAbstractFile } from 'obsidian';
 import { DEFAULT_SETTINGS } from 'settings';
 import * as app from 'state/app.state';
 import * as settings from 'state/settings.state';
@@ -9,7 +9,13 @@ import * as wait from 'service/wait.service';
 import { TaskToggleModal } from 'task-toggle-modal';
 import { getLogFileName } from 'service/logging.service';
 import { updateTaskFromEditor } from './service/modify-task.service';
+import { managedTaskFiles } from 'service/data-view.service';
 
+/*
+  Design
+  - don't allow tasks to carry over from previous day  
+*/
+// todo: consider outputs	
 export default class TaskTrackingPlugin extends Plugin {
 	statusBar: HTMLElement;
 
@@ -17,7 +23,7 @@ export default class TaskTrackingPlugin extends Plugin {
 		app.set(this.app);
 		settings.set(Object.assign({}, { ...DEFAULT_SETTINGS, logFileName: getLogFileName() }, await this.loadData()));
 		statusBar.set(this.addStatusBarItem());
-		wait.until(() => dv.ready(), this.setup);
+		wait.until(() => dv.ready(), this.setup, 20, 2000);
 	}
 
 	setup = async () => {
@@ -29,6 +35,15 @@ export default class TaskTrackingPlugin extends Plugin {
 		
 		statusBar.set(this.addStatusBarItem());
 		statusBar.initialize();
+		// this.registerEvent(this.app.vault.on("modify", this.onManagedFileUpdateStatusBar));
+	}
+
+	onManagedFileUpdateStatusBar = (file: TAbstractFile) => {
+		const managedFiles = managedTaskFiles();
+		if (managedFiles.includes(file.path)) {
+			console.log(`file change`)
+			statusBar.initialize();
+		}
 	}
 
 	editorCallback = (status: Status) => (check: boolean, editor: Editor) => {
