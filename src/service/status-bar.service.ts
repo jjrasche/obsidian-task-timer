@@ -23,5 +23,5 @@ const changStatusBar = () => {
     // change status bar
     _statusBar?.firstChild?.remove();
     const style = task.overTime ? overTimeStyle : task.nearOver ? nearOverstyle : normalstyle; 
-    _statusBar?.createEl("span", { text: taskToStausBar(task), attr: style });
+    _statusBar?.createEl("span", { text: task.readablePhrase, attr: style });
 }

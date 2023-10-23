@@ -85,10 +85,16 @@ test('createElement', () => {
     expect(actual).to.eql(`blah -14`);
 });
 
-
-
 test('taskToSelect', () => {
     jest.spyOn(Task.prototype, 'now', 'get').mockImplementation(() => new Date("2023-10-19 18:10").getTime());
     let task = new Task({ phrase: "blah", status: Status.Active, etc: 11, timeTaken: 15, startTime: new Date("2023-10-19 18:00") } as Task);
     expect(taskToSelect(task)).to.eql(`A 18:00 (-14) blah`);
+});
+
+
+test('readablePhrase', () => {
+    expect(new Task({phrase: "hello [link](http://link.com)"} as Task).readablePhrase).to.eql("hello link");
+    expect(new Task({phrase: "hello [[link]]"} as Task).readablePhrase).to.eql("hello link");
+    expect(new Task({phrase: "hello [[link|other name]]"} as Task).readablePhrase).to.eql("hello other name");
+    expect(new Task({phrase: "hello [[#^aa3ab2|other name]]"} as Task).readablePhrase).to.eql("hello other name");
 });

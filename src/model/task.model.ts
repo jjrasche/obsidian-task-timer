@@ -57,6 +57,17 @@ export class Task {
 	get displayString() { 
 		return `{'phrase':'${this.phrase}', 'originalStatus':'${this.originalStatus}', 'tabs':'${this.tabs}', 'link':'${this.link}', 'status':'${this.status}', 'timeTaken':'${this.timeTaken}', 'etc':'${this.etc}', 'startTime':'${this.startTime}', 'path':'${this.path}', 'line':'${this.line}}'`;
 	}
+
+	get readablePhrase() {
+		let ret = this.phrase;
+		// handle backlink without alias
+		ret = ret.replace(/\[\[([^|]*?)\]\]/, "$1");
+		// handle backlink with alias: "hello [[#^aa3ab2|other name]]" -> "hello other name"
+		ret = ret.replace(/\[\[.*\|/, "").replace(/\]\]/,"")
+		// handle link: "hello [link](http://link.com)" -> "hello link"
+		ret = ret.replace(/\]\(.*\)/, "").replace("[", "");
+		return ret;
+	}
 }
 
 export const staskToTask = (stask: STask): Task => {
