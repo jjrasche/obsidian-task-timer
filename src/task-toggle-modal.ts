@@ -1,12 +1,12 @@
 import { Status, StatusWord } from "model/status";
-import { Task, taskToSelect } from "model/task.model";
+import { Task, orderTasks, taskToSelect } from "model/task.model";
 import { SuggestModal } from "obsidian";
-import { managedTasks } from "service/data-view.service";
+import { todaysTasks } from "service/data-view.service";
 import { changeTaskStatus } from "./service/modify-task.service";
 
 export class TaskToggleModal extends SuggestModal<Task> {
 	async getSuggestions(query: string): Promise<any[]> {
-		return managedTasks()
+		return todaysTasks()
 			.filter((task) => task.phrase.toLowerCase().includes(query.toLowerCase()) && task.status != Status.Complete)
 	}
 	

@@ -1,7 +1,8 @@
 import { Status } from "./status";
 import { expect } from "chai";
 import { STask } from "obsidian-dataview";
-import { Task, pullEtc, pullStart, pullTimeTaken, staskToTask, taskToLine, taskToSelect, taskToStausBar } from "./task.model";
+import { Task, orderTasks, pullEtc, pullStart, pullTimeTaken, staskToTask, taskToLine, taskToSelect, taskToStausBar } from "./task.model";
+
 
 test('pullEtc', () => metadataCheck(pullEtc, "blah", "  etc:20", 20));
 test('pullEtc', () => metadataCheck(pullEtc, "blah", `  etc:20
@@ -93,8 +94,21 @@ test('taskToSelect', () => {
 
 
 test('readablePhrase', () => {
-    expect(new Task({phrase: "hello [link](http://link.com)"} as Task).readablePhrase).to.eql("hello link");
-    expect(new Task({phrase: "hello [[link]]"} as Task).readablePhrase).to.eql("hello link");
-    expect(new Task({phrase: "hello [[link|other name]]"} as Task).readablePhrase).to.eql("hello other name");
-    expect(new Task({phrase: "hello [[#^aa3ab2|other name]]"} as Task).readablePhrase).to.eql("hello other name");
+    expect(new Task({phrase: "hello [link](http://link.com)"} as Task).readablePhrase).to.eql("hello link (0)");
+    expect(new Task({phrase: "hello [[link]]"} as Task).readablePhrase).to.eql("hello link (0)");
+    expect(new Task({phrase: "hello [[link|other name]]"} as Task).readablePhrase).to.eql("hello other name (0)");
+    expect(new Task({phrase: "hello [[#^aa3ab2|other name]]"} as Task).readablePhrase).to.eql("hello other name (0)");
+});
+
+test('readablePhrase', () => {
+    const data = [
+        { "order": 1, "phrase": "sprint, setup next sprint for me", "originalStatus": "/", "status": 1, "timeTaken": 20, "etc": 5, "startTime": new Date("2023-10-24T15:29:00.000Z"), "path": "resource/Dailies/23-10-24.md", "line": 4 } as unknown as Task,
+        { "order": 2, "phrase": "qb, lauren, pa106 fix external segment no discriminator issue", "originalStatus": "/", "status": 1, "timeTaken": 14, "etc": 15, "startTime": new Date("2023-10-24T15:40:00.000Z"), "path": "resource/Dailies/23-10-24.md", "line": 6 } as unknown as Task,
+        { "order": 3, "phrase": "sprint, create review document", "originalStatus": "/", "status": 1, "timeTaken": 16, "etc": 20, "startTime": new Date("2023-10-24T14:24:00.000Z"), "path": "resource/Dailies/23-10-24.md", "line": 8 } as unknown as Task,
+        { "order": 4, "phrase": "crm, modify CRM export query in [format](https://setseg-my.sharepoint.com/:x:/g/personal/sandary_setseg_org/EVsujpGv-ydIrCD4dxQapMoBcNMzMI_fpI4-7ZAdxvfPuA?wdOrigin=TEAMS-ELECTRON.p2p_ns.bim&wdExp=TEAMS-CONTROL&wdhostclicktime=1698155727220&web=1)", "originalStatus": "/", "status": 1, "timeTaken": 40, "etc": 5, "startTime": new Date("2023-10-24T14:48:00.000Z"), "path": "resource/Dailies/23-10-24.md", "line": 9 } as unknown as Task,
+        { "order": 5, "phrase": "tt, understand obsidian chart pie graph [chartjs docs](https://www.chartjs.org/docs/latest/charts/doughnut.html)", "originalStatus": "/", "status": 1, "timeTaken": 13, "etc": 5, "startTime": new Date("2023-10-24T11:45:00.000Z"), "path": "resource/Dailies/23-10-24.md", "line": 20 } as unknown as Task,
+        { "order": 6, "phrase": "tt, bug, ordering issue on managed tasks", "originalStatus": "*", "status": 0, "timeTaken": 25, "etc": 5, "startTime": new Date("2023-10-24T16:12:00.000Z"), "path": "resource/Dailies/23-10-24.md", "line": 24 } as unknown as Task
+    ]
+    const actual = data.sort(orderTasks);
+    expect(actual.map(t => (t as any).order)).to.eql([6,2,1,4,3,5]);
 });

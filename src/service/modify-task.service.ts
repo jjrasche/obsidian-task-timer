@@ -4,7 +4,7 @@ import { Editor } from "obsidian"
 import * as log from './logging.service';
 import * as statusBar from './status-bar.service';
 import * as file from "./file.service";
-import { getTaskByCursor } from "./data-view.service";
+import { getTaskByCursor, todaysTasks } from "./data-view.service";
 
 export const updateTaskFromEditor = async (editor: Editor, status: Status) => {
     const task = getTaskByCursor(editor);
@@ -19,15 +19,14 @@ export const changeTaskStatus = async (task: Task, status: Status) => {
 
     if (status === Status.Active) {
         task.startTime = new Date();
-    } else if (task.status === Status.Active) {
+        await inactivateAllActiveTasks();
+    } else if (task.status === Status.Active) {       // inactivating = any action performed on an already active task
         task.timeTaken = (task.timeTaken ?? 0) + (!!task.startTime ? Math.round((Date.now() - task.startTime.getTime()) / (1000*60)) : 0);
     }
     task.status = status;
 
     await log.toConsoleAndFile(`task object changed:\n${originalTask.displayString}\n${task.displayString}`);
-
     await saveTaskLine(task);
-    // todo: fix statusbar update delay
     statusBar.initialize();
     // consider need to update allTasks or can I trigger data view refresh???
 }
@@ -46,5 +45,11 @@ const saveTaskLine = async (task: Task) => {
     await log.toConsoleAndFile(`updating task in line:${task.line} in file:"${task.path}\n\t${originalLine}\n\t${newLine}"`);
 }
 
-// todo
-export const inactivateAllActiveTasks = async () => { }
+export const inactivateAllActiveTasks = async () => {
+    // find all currently active tasks
+    const activeTasks = todaysTasks().filter(t => t.status === Status.Active);
+    if (activeTasks.length === 0) return;
+    // change each task to inactive
+    await log.toConsoleAndFile(`inactivating ${activeTasks.length} tasks:\n${activeTasks.map(t => t.displayString).join("\n")}"`);
+    await Promise.all(activeTasks.map(t => changeTaskStatus(t, Status.Inactive)));
+}

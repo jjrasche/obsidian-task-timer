@@ -31,3 +31,5 @@ export const simpleDate = (d?: Date): string => !!d ? `${d.getFullYear().toStrin
 export const simpleTime = (d?: Date): string => !!d ? `${d.getHours().toString().padStart(2, "0")}${d.getMinutes().toString().padStart(2, "0")}` : "";
 export const simpleDisplayDate = (d?: Date): string => !!d ? `${d.getFullYear().toString().slice(2)}-${(new Date()).getMonth() + 1}-${d.getDate()}` : "";
 export const simpleDisplayTime = (d?: Date): string => !!d ? `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}` : "";
+
+export const minutesSince = (d: Date): number => parseInt((((new Date()).getTime() / (1000 * 60)) - (d.getTime() / (1000 * 60))).toFixed(0));

@@ -9,7 +9,7 @@ export const get = () => _statusBar;
 
 export const initialize = async () => {
     if (!!_intervalID) { clearInterval(_intervalID) }
-    _intervalID = setInterval(() => changStatusBar(), 1000);
+    _intervalID = setInterval(() => changStatusBar(), 4000);
 }
 
 

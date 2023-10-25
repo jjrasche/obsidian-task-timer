@@ -10,6 +10,9 @@ import { TaskToggleModal } from 'task-toggle-modal';
 import { getLogFileName } from 'service/logging.service';
 import { updateTaskFromEditor } from './service/modify-task.service';
 import { managedTaskFiles } from 'service/data-view.service';
+import { Task } from './model/task.model';
+import { find, read } from './service/file.service';
+import { minutesSince, simpleDisplayDate } from './service/date.service';
 
 /*
   Design
@@ -45,10 +48,30 @@ export default class TaskTrackingPlugin extends Plugin {
 			statusBar.initialize();
 		}
 	}
-
+ 
 	editorCallback = (status: Status) => (check: boolean, editor: Editor) => {
 		if (!!check) { return !!editor; }
 		updateTaskFromEditor(editor, status);
 	};
+
+	/*
+		helper methods to interact with data
+	*/
+	getAllTaskData = (): Task[] => dv.trackedTassks();
+
+	getDailyWorkPersonalUnTrackedTimeData = (): number[] => {
+		const dailyFileName = `resource/Dailies/${simpleDisplayDate(new Date())}`;
+		const todaysTasks = dv.todaysTasks();
+		
+		const workTasks = todaysTasks.filter(t => t.isWork);
+		const workTime = workTasks.reduce((agg, curr) => agg += curr.timeSpent ?? 0, 0);
+		
+		const nonWorkTasks = todaysTasks.filter(t => !t.isWork);
+		const nonWorkTime = nonWorkTasks.reduce((agg, curr) => agg += curr.timeSpent ?? 0, 0);
+		
+		const startOfDay = new Date(find(dailyFileName).stat.ctime);
+		const nonTrackedTime = minutesSince(startOfDay) - (workTime + nonWorkTime);
+		return [workTime, nonWorkTime, nonTrackedTime];
+	}
 }
 

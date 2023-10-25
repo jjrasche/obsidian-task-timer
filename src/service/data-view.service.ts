@@ -1,6 +1,6 @@
 import { DataviewApi, getAPI, STask } from "obsidian-dataview";
 import * as app from '../state/app.state';
-import { staskToTask, Task } from "../model/task.model";
+import { orderTasks, staskToTask, Task } from "../model/task.model";
 import { Editor } from "obsidian";
 import { sameDay } from "./date.service";
 import { Status } from "../model/status";
@@ -14,28 +14,29 @@ export const api = (): DataviewApi => {
     return _api;
 }
 
+// todo: cash task data and pull only when files with etc tasks have changed... adds overhead, but "getTaskByCursor" is taking 100ms!
+
 export const ready = (): boolean => !!api() && !!api().pages() && api().pages().length > 0;
-export const allTasks: () => STask[] = () => api().pages().file.tasks as STask[];
-export const managedTasks: () => Task[] = () => {
-    return allTasks()
-        .filter((t: STask) => /etc\:[0-9]{1,3}/.test(t.text))                       // filter out tasks without etc prior to conversion
-        .map((stask: STask) => staskToTask(stask))
+export const allTasks = (): STask[] => [...api().pages().file.tasks]
+
+export const trackedTassks = (): Task[] => allTasks()
+    .filter((t: STask) => /etc\:[0-9]{1,3}/.test(t.text))
+    .map((stask: STask) => staskToTask(stask));
+export const todaysTasks = (): Task[] => trackedTassks().filter((t: Task) => !! t.startTime && sameDay(new Date(), t.startTime));
+
+export const toggleTasks = (): Task[] => {
+    return todaysTasks()
         .filter((t: Task) => t.status != Status.Complete)                           // not managing complete tasks
-        .filter((t: Task) => !! t.startTime && sameDay(new Date(), t.startTime))    // same day as today
-        .sort((a: Task, b: Task) => {
-            if (b.status != a.status) {
-                return b.status = a.status;
-            }
-            return (b.startTime?? new Date("2000-1-1")).getTime() - (a.startTime?? new Date("2000-1-1")).getTime()
-        });
+        .sort((a, b) => orderTasks(a,b));
 }
-export const managedTaskFiles = (): string[] => managedTasks().map(t => t.path);
+
+export const managedTaskFiles = (): string[] => todaysTasks().map(t => t.path);
 
 export const getTaskByCursor = (editor: Editor): Task => {
     const line = editor.getCursor().line;
     const path = app.get().workspace.getActiveFile()?.path;
-    const stask = allTasks().find(stask => stask.path == path && stask.line == line);
-    const task = staskToTask(stask);
+    const sTask = allTasks().find(stask => stask.path == path && stask.line == line);
+    const task = staskToTask(sTask);
     if (!task) {
         throw new Error(`couldn't find dataview task in file ${path} line ${line}`);
     }
@@ -43,7 +44,7 @@ export const getTaskByCursor = (editor: Editor): Task => {
     return task;
 }
 
-export const getActiveTask = (): Task => managedTasks()[0];
+export const getActiveTask = (): Task => todaysTasks()[0];
 
 /*
     when api is initialized, set listeners 

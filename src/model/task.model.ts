@@ -13,6 +13,7 @@ export class Task {
 	startTime?: Date;
 	path: string;
 	line: number;
+	header: string;
 
 	constructor(task: Task = {} as Task) {
 		this.phrase = task.phrase ?? this.phrase;
@@ -25,21 +26,24 @@ export class Task {
 		this.startTime = task.startTime ?? this.startTime;
 		this.path = task.path ?? this.path;
 		this.line = task.line ?? this.line;
+		this.header = task.header ?? this.header;
 	}
 	get now() { return new Date().getTime(); }
 
 	get timeSinceActive() {
 		const t = Math.round(this.now - (this.startTime?.getTime() ?? 0));
-		return !!this.startTime ? Math.round((this.now - this.startTime.getTime()) / (1000*60)) : 0
+		return !!this.startTime ? Math.round((this.now - this.startTime.getTime()) / (1000*60)) : 0;
 	}
 	get timeEllapsed() { 
-		return this.status == Status.Active ? this.timeSinceActive : 0
+		return this.status == Status.Active ? this.timeSinceActive : 0;
+	}
+	get timeSpent() { 
+		return ((this.timeTaken ?? 0) + this.timeEllapsed);
 	}
 
 	get timeLeft() {
 		if (!!this.etc) {
-			const timeSpent = ((this.timeTaken ?? 0) + this.timeEllapsed);
-			return this.etc - timeSpent;
+			return this.etc - this.timeSpent;
 		}
 		return 0;
 	}
@@ -66,7 +70,18 @@ export class Task {
 		ret = ret.replace(/\[\[.*\|/, "").replace(/\]\]/,"")
 		// handle link: "hello [link](http://link.com)" -> "hello link"
 		ret = ret.replace(/\]\(.*\)/, "").replace("[", "");
-		return ret;
+		return `${ret} (${this.timeLeft})`;
+	}
+
+	get area() {
+		if (this.path.startsWith("area/")) {
+			return this.path.split("/")[1];
+		}
+	}
+
+	get isWork() {
+		return (this.path.contains("resource/Dailies") && this.header == "Work") ||
+			(this.area == "work tickets")
 	}
 }
 
@@ -74,6 +89,7 @@ export const staskToTask = (stask: STask): Task => {
 	let task = new Task();
 	let text = stask.text.split("\n")[0];
 	task.path = stask.path;
+	task.header = stask.header?.subpath;
 	task.tabs = [...Array(stask?.position?.start?.col ?? 0)].reduce((acc) => acc += "\t", "") ?? "";
 	task.line = stask.line;
 	[text, task.startTime] = [...pullStart(text)]; 
@@ -97,6 +113,13 @@ export const taskToLine = (task: Task): string => {
 // `A 18:00 (-14) blah`
 export const taskToStausBar = (t: Task): string => `${t.phrase} ${t.timeLeft}`;
 export const taskToSelect = (t: Task): string => `${StatusWord[t.status?? 0][0]} ${simpleDisplayTime(t.startTime)} (${t.timeLeft}) ${t.phrase}`;
+
+export const orderTasks = (a: Task, b: Task) => {
+	if (b.status != a.status) {
+		return a.status - b.status;
+	}
+	return (b.startTime?? new Date("2000-1-1")).getTime() - (a.startTime?? new Date("2000-1-1")).getTime()
+}
 
 /*
 	pullers: used to take metadata out of a string and return the formatted value of that metadata
