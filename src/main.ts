@@ -32,8 +32,8 @@ export default class TaskTrackingPlugin extends Plugin {
 	setup = async () => {
 		// due to limitations of obsidian adding icons, I must use icon swapper and inject new svgs to get icons I want
 		this.addCommand({ id: 'activate-task-command', icon: "dot-network", name: 'Activate Task', hotkeys: [{ modifiers: ["Alt"], key: "a" }], editorCheckCallback: this.editorCallback(Status.Active) });
-		this.addCommand({ id: 'inactivate-task-command', icon: "double-down-arrow-glyph", name: 'Inactivate Task', hotkeys: [{ modifiers: ["Alt"], key: "i" }], editorCheckCallback: this.editorCallback(Status.Inactive) });
-		this.addCommand({ id: 'complete-task-command', icon: "double-up-arrow-glyph", name: 'Complete Task', hotkeys: [{ modifiers: ["Alt"], key: "c" }], editorCheckCallback: this.editorCallback(Status.Complete) });
+		this.addCommand({ id: 'inactivate-task-command', icon: "double-up-arrow-glyph", name: 'Inactivate Task', hotkeys: [{ modifiers: ["Alt"], key: "i" }], editorCheckCallback: this.editorCallback(Status.Inactive) });
+		this.addCommand({ id: 'complete-task-command', icon: "double-down-arrow-glyph", name: 'Complete Task', hotkeys: [{ modifiers: ["Alt"], key: "c" }], editorCheckCallback: this.editorCallback(Status.Complete) });
 		this.addCommand({ id: "toggle-task", icon: "yesterday-glyph", name: "Toggle Task", hotkeys: [{ modifiers: ["Alt"], key: "t" }], callback: async () => new TaskToggleModal(this.app).open() });
 		
 		statusBar.set(this.addStatusBarItem());
@@ -59,14 +59,14 @@ export default class TaskTrackingPlugin extends Plugin {
 	*/
 	getAllTaskData = (): Task[] => dv.trackedTassks();
 
-	getDailyWorkPersonalUnTrackedTimeData = (): number[] => {
-		const dailyFileName = `resource/Dailies/${simpleDisplayDate(new Date())}`;
-		const todaysTasks = dv.todaysTasks();
+	getDailyWorkPersonalUnTrackedTimeData = (d: Date): number[] => {
+		const dailyFileName = `resource/Dailies/${simpleDisplayDate(d ?? new Date())}`;
+		const tasks = dv.todaysTasks();
 		
-		const workTasks = todaysTasks.filter(t => t.isWork);
+		const workTasks = tasks.filter(t => t.isWork);
 		const workTime = workTasks.reduce((agg, curr) => agg += curr.timeSpent ?? 0, 0);
 		
-		const nonWorkTasks = todaysTasks.filter(t => !t.isWork);
+		const nonWorkTasks = tasks.filter(t => !t.isWork);
 		const nonWorkTime = nonWorkTasks.reduce((agg, curr) => agg += curr.timeSpent ?? 0, 0);
 		
 		const startOfDay = new Date(find(dailyFileName).stat.ctime);

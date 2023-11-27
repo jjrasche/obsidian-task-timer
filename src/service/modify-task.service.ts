@@ -14,7 +14,7 @@ export const updateTaskFromEditor = async (editor: Editor, status: Status) => {
 export const changeTaskStatus = async (task: Task, status: Status) => {
     const originalTask = new Task(task); // for logging
     // do not add the same status as current status
-    if (task.status === status || (task.status === Status.Complete && status === Status.Inactive)){ return; }
+    if (task.status === status){ return; }
     // consider not changing task if the d is not today, enforcing that a new task is created per day
 
     if (status === Status.Active) {

@@ -81,11 +81,13 @@ export class Task {
 
 	get isWork() {
 		return (this.path.contains("resource/Dailies") && this.header == "Work") ||
-			(this.area == "work tickets")
+			(this.area == "work tickets") ||
+			(this.area == "sprints")
 	}
 }
 
 export const staskToTask = (stask: STask): Task => {
+	if (!stask) throw Error("staskToTask: stask is undefined");
 	let task = new Task();
 	let text = stask.text.split("\n")[0];
 	task.path = stask.path;
@@ -132,7 +134,7 @@ export const pullStart = (str: string): [string, Date?] => {
 }
 export const pullEtc = (str: string) => pullMetadataNumber(str, /etc\:[0-9]{1,3}/g)
 export const pullTimeTaken = (str: string) => pullMetadataNumber(str, /t\:[0-9]{1,3}/g);
-export const pullLink = (str: string) => pullMetadata(str, /\^[a-z0-9]{6}/g, (str) => str);
+export const pullLink = (str: string) => pullMetadata(str, /\^[a-z0-9]{6}$/g, (str) => str);
 
 export const pullMetadataNumber = (str: string, regexp: RegExp): [string, number?] => {
 	let n;

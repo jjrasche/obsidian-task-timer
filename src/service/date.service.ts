@@ -1,7 +1,7 @@
 export function now (): Date { return new Date() }
 export function nowIso (): string { return now().toISOString() }
 export const readableNow = (): string => readable(now());
-export const readable = (d: Date): string => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()} ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}:${d.getSeconds().toString().padStart(2, "0")}`;  // yyyy-mm-dd hh:mm:ss
+export const readable = (d: Date): string => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate().toString().padStart(2, "0")} ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}:${d.getSeconds().toString().padStart(2, "0")}`;  // yyyy-mm-dd hh:mm:ss
 export const from = (time: number) => new Date(time); 
 export const min  = new Date(-8640000000000000);
 export const max = new Date(8640000000000000);
@@ -27,9 +27,9 @@ export const convertSimpleDate = (d: string, t?: string): Date => {
     }
 }
 
-export const simpleDate = (d?: Date): string => !!d ? `${d.getFullYear().toString().slice(2)}${(new Date()).getMonth() + 1}${d.getDate()}` : "";
+export const simpleDate = (d?: Date): string => !!d ? `${d.getFullYear().toString().slice(2)}${(new Date()).getMonth() + 1}${d.getDate().toString().padStart(2, "0")}` : "";
 export const simpleTime = (d?: Date): string => !!d ? `${d.getHours().toString().padStart(2, "0")}${d.getMinutes().toString().padStart(2, "0")}` : "";
-export const simpleDisplayDate = (d?: Date): string => !!d ? `${d.getFullYear().toString().slice(2)}-${(new Date()).getMonth() + 1}-${d.getDate()}` : "";
+export const simpleDisplayDate = (d?: Date): string => !!d ? `${d.getFullYear().toString().slice(2)}-${(new Date()).getMonth() + 1}-${d.getDate().toString().padStart(2, "0")}` : "";
 export const simpleDisplayTime = (d?: Date): string => !!d ? `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}` : "";
 
 export const minutesSince = (d: Date): number => parseInt((((new Date()).getTime() / (1000 * 60)) - (d.getTime() / (1000 * 60))).toFixed(0));
