@@ -57,7 +57,7 @@ export default class TaskTrackingPlugin extends Plugin {
 	/*
 		helper methods to interact with data
 	*/
-	getAllTaskData = (): Task[] => dv.trackedTassks();
+	getAllTaskData = (): Task[] => dv.trackedTasks();
 
 	getDailyWorkPersonalUnTrackedTimeData = (d: Date): number[] => {
 		const dailyFileName = `resource/Dailies/${simpleDisplayDate(d ?? new Date())}`;

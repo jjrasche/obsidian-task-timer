@@ -19,10 +19,10 @@ export const ready = (): boolean => !!api() && !!api().pages() && api().pages().
 export const allTasks = (): STask[] => [...api().pages().file.tasks]
 
 // todo: consider making the is a tracked task qualifier /d:\:[0-9{6}]\s/
-export const trackedTassks = (): Task[] => allTasks()
+export const trackedTasks = (): Task[] => allTasks()
     .filter((t: STask) => /etc\:[0-9]{1,3}/.test(t.text))
     .map((stask: STask) => staskToTask(stask));
-export const todaysTasks = (d: Date = new Date()): Task[] => trackedTassks()
+export const todaysTasks = (d: Date = new Date()): Task[] => trackedTasks()
     .filter((t: Task) => !! t.startTime && sameDay(d, t.startTime))
     .sort((a, b) => orderTasks(a,b));
 
