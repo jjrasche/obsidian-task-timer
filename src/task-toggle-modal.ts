@@ -1,9 +1,10 @@
 import { Status } from "model/status";
-import { Task, taskToSelect } from "model/task.model";
+import { Task, getReadablePhrase, orderTasks, taskToSelect } from "model/task.model";
 import { Instruction, SuggestModal } from "obsidian";
-import { todaysTasks, trackedTasks } from "service/data-view.service";
+import { todaysTasks, trackedTasks, uniqueTasksByText } from "service/data-view.service";
 import { changeTaskStatus } from "./service/modify-task.service";
 import * as app from 'state/app.state';
+import { TaskInserter } from "./model/task-inserter.model";
 
 export class TaskToggleModal extends SuggestModal<Task> {
 
@@ -26,16 +27,25 @@ export class TaskToggleModal extends SuggestModal<Task> {
 	}
 
 	async getSuggestions(query: string): Promise<any[]> {
-		const todays = todaysTasks().filter((task) => task.phrase.toLowerCase().includes(query.toLowerCase()));
-		return todays;
+		const todayTasks = todaysTasks().filter((task) => task.phrase.toLowerCase().includes(query.toLowerCase()));
+		let createSuggestions = uniqueTasksByText()
+		createSuggestions = (createSuggestions.filter((task) => task.phrase?.toLowerCase()?.startsWith(query.toLowerCase())).slice(0, 10)) as any[];
+		const firstCompleteIndex = todayTasks.findIndex(t => t.status === Status.Complete);
+		todayTasks.splice(firstCompleteIndex, 0, ...createSuggestions as any);
+		return todayTasks;
 	}
 	
-	renderSuggestion(task: Task, el: HTMLElement) {
-		el.createEl("div", { text: taskToSelect(task) });
+	renderSuggestion(task: Task | TaskInserter, el: HTMLElement) {
+		const text = task instanceof Task ? taskToSelect(task) : getReadablePhrase(task.phrase);
+		el.createEl("div", { text });
 	}
 
-	onChooseSuggestion(task: Task) {
-		// consider: navigating to task page when choosing
-		changeTaskStatus(task, task.status == Status.Active ? Status.Inactive : Status.Active);
+	onChooseSuggestion(task: Task | TaskInserter) {
+		if (task instanceof Task) {
+			// consider: navigating to task page when choosing
+			changeTaskStatus(task, task.status == Status.Active ? Status.Inactive : Status.Active);
+		} else {
+			// create task in appropriate place ... need to use mapper to make appropriate move maybe 
+		}
 	}
 }

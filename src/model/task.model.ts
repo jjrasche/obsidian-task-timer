@@ -63,14 +63,7 @@ export class Task {
 	}
 
 	get readablePhrase() {
-		let ret = this.phrase;
-		// handle backlink without alias
-		ret = ret.replace(/\[\[([^|]*?)\]\]/, "$1");
-		// handle backlink with alias: "hello [[#^aa3ab2|other name]]" -> "hello other name"
-		ret = ret.replace(/\[\[.*\|/, "").replace(/\]\]/,"")
-		// handle link: "hello [link](http://link.com)" -> "hello link"
-		ret = ret.replace(/\]\(.*\)/, "").replace("[", "");
-		return `${ret} (${this.timeLeft})`;
+		return `${getReadablePhrase(this.phrase)} (${this.timeLeft})`;
 	}
 
 	get area() {
@@ -84,6 +77,17 @@ export class Task {
 			(this.area == "work tickets") ||
 			(this.area == "sprints")
 	}
+}
+
+export function getReadablePhrase(phrase: string) {
+	let ret = phrase;
+	// handle backlink without alias
+	ret = ret.replace(/\[\[([^|]*?)\]\]/, "$1");
+	// handle backlink with alias: "hello [[#^aa3ab2|other name]]" -> "hello other name"
+	ret = ret.replace(/\[\[.*\|/, "").replace(/\]\]/,"")
+	// handle link: "hello [link](http://link.com)" -> "hello link"
+	ret = ret.replace(/\]\(.*\)/, "").replace("[", "");
+	return ret;
 }
 
 export const staskToTask = (stask: STask): Task => {

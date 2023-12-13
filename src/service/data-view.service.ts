@@ -3,6 +3,7 @@ import * as app from '../state/app.state';
 import { orderTasks, staskToTask, Task } from "../model/task.model";
 import { Editor } from "obsidian";
 import { sameDay } from "./date.service";
+import { TaskInserter } from "../model/task-inserter.model";
 
 let _api: DataviewApi;
 
@@ -25,6 +26,25 @@ export const trackedTasks = (): Task[] => allTasks()
 export const todaysTasks = (d: Date = new Date()): Task[] => trackedTasks()
     .filter((t: Task) => !! t.startTime && sameDay(d, t.startTime))
     .sort((a, b) => orderTasks(a,b));
+
+export const uniqueTasksByText = (): TaskInserter[] => {
+    const tasks = trackedTasks();
+    return tasks.reduce((acc: TaskInserter[], t: Task) => {
+        const inserter = acc.find(a => a.phrase == t.phrase);
+        if (!!inserter) {
+            inserter.instances++
+        } else {
+            acc.push(new TaskInserter(t));
+        }
+        return acc;
+    }, []).sort((a: TaskInserter, b: TaskInserter) => {
+        if (b.instances != a.instances) {
+            return b.instances - a.instances;
+        } else {
+            return b.phrase.localeCompare(a.phrase);
+        }
+    });
+}
 
 export const managedTaskFiles = (): string[] => todaysTasks().map(t => t.path);
 
