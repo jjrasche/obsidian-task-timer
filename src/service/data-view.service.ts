@@ -3,7 +3,7 @@ import * as app from '../state/app.state';
 import { orderTasks, staskToTask, Task } from "../model/task.model";
 import { Editor } from "obsidian";
 import { sameDay } from "./date.service";
-import { TaskInserter } from "../model/task-inserter.model";
+import { TaskSuggestion } from "../model/task-suggestion.model";
 
 let _api: DataviewApi;
 
@@ -27,19 +27,19 @@ export const todaysTasks = (d: Date = new Date()): Task[] => trackedTasks()
     .filter((t: Task) => !! t.startTime && sameDay(d, t.startTime))
     .sort((a, b) => orderTasks(a,b));
 
-export const uniqueTasksByText = (): TaskInserter[] => {
+export const uniqueTasksByText = (): TaskSuggestion[] => {
     const tasks = trackedTasks();
-    return tasks.reduce((acc: TaskInserter[], t: Task) => {
-        const inserter = acc.find(a => a.phrase == t.phrase);
-        if (!!inserter) {
-            inserter.instances++
+    return tasks.reduce((acc: TaskSuggestion[], t: Task) => {
+        const suggestion = acc.find(a => a.phrase == t.phrase);
+        if (!!suggestion) {
+            suggestion.instances.push(t);
         } else {
-            acc.push(new TaskInserter(t));
+            acc.push(new TaskSuggestion(t));
         }
         return acc;
-    }, []).sort((a: TaskInserter, b: TaskInserter) => {
-        if (b.instances != a.instances) {
-            return b.instances - a.instances;
+    }, []).sort((a: TaskSuggestion, b: TaskSuggestion) => {
+        if (b.instances.length != a.instances.length) {
+            return b.instances.length - a.instances.length;
         } else {
             return b.phrase.localeCompare(a.phrase);
         }

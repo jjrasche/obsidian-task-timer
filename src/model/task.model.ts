@@ -66,6 +66,10 @@ export class Task {
 		return `${getReadablePhrase(this.phrase)} (${this.timeLeft})`;
 	}
 
+	setStartTime() {
+		this.startTime = new Date();
+	}
+
 	get area() {
 		if (this.path.startsWith("area/")) {
 			return this.path.split("/")[1];

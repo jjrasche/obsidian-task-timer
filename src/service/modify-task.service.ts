@@ -18,7 +18,7 @@ export const changeTaskStatus = async (task: Task, status: Status) => {
     // consider not changing task if the d is not today, enforcing that a new task is created per day
 
     if (status === Status.Active) {
-        task.startTime = new Date();
+        task.setStartTime();
         await inactivateAllActiveTasks();
     } else if (task.status === Status.Active) {       // inactivating = any action performed on an already active task
         task.timeTaken = (task.timeTaken ?? 0) + (!!task.startTime ? Math.round((Date.now() - task.startTime.getTime()) / (1000*60)) : 0);
@@ -26,23 +26,33 @@ export const changeTaskStatus = async (task: Task, status: Status) => {
     task.status = status;
 
     await log.toConsoleAndFile(`task object changed:\n${originalTask.displayString}\n${task.displayString}`);
-    await saveTaskLine(task);
+    await saveTaskLine(task, updateTaskLine);
     statusBar.initialize();
     // consider need to update allTasks or can I trigger data view refresh???
 }
 
-
-const saveTaskLine = async (task: Task) => {
-    // going to assume I'm writing to the correct line until I see it being a problem
-    let originalContent = await file.read(task.path);
-    const lines = originalContent.split("\n")
+const updateTaskLine = async (task: Task, lines: string[]): Promise<string[]> => {
     const originalLine = lines[task.line];
     const newLine = taskToLine(task);
     lines[task.line] = newLine
-    const updatedContent = lines.join("\n");
-    await file.write(task.path, updatedContent);
     // mark task and wait for dataview to update its task list to prevent race conditions of altering source prior to task objects updating
     await log.toConsoleAndFile(`updating task in line:${task.line} in file:"${task.path}\n\t${originalLine}\n\t${newLine}"`);
+    return lines;
+}
+
+export const addTaskLine = async (header: string, task: Task, lines: string[]): Promise<string[]> => {
+    const headerLine = lines.findIndex((l: string) => l.contains(header)) + 1;
+    const newLine = taskToLine(task);
+    await log.toConsoleAndFile(`adding task in line:${headerLine} in file:${task.path}`);
+    return [...lines.slice(0, headerLine), newLine, ...lines.slice(headerLine)];
+}
+
+export const saveTaskLine = async (task: Task, modifier: (task: Task, lines: string[]) => Promise<string[]>) => {
+    let originalContent = await file.read(task.path);
+    let lines = originalContent.split("\n");
+    lines = await modifier(task, lines);
+    const updatedContent = lines.join("\n");
+    await file.write(task.path, updatedContent);
 }
 
 export const inactivateAllActiveTasks = async () => {

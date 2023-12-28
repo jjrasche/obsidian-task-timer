@@ -1,10 +1,10 @@
 import { Status } from "model/status";
 import { Task, getReadablePhrase, orderTasks, taskToSelect } from "model/task.model";
 import { Instruction, SuggestModal } from "obsidian";
-import { todaysTasks, trackedTasks, uniqueTasksByText } from "service/data-view.service";
+import { todaysTasks as getTodaysTasks, trackedTasks, uniqueTasksByText } from "service/data-view.service";
 import { changeTaskStatus } from "./service/modify-task.service";
 import * as app from 'state/app.state';
-import { TaskInserter } from "./model/task-inserter.model";
+import { TaskSuggestion } from "./model/task-suggestion.model";
 
 export class TaskToggleModal extends SuggestModal<Task> {
 
@@ -18,7 +18,7 @@ export class TaskToggleModal extends SuggestModal<Task> {
 		const fileTasks = trackedTasks().filter(t => t.path == file.path && t.status != Status.Complete);
 		const etcByFile = fileTasks.reduce((acc, t) => acc + (t.etc ?? 0), 0);
 		const timeByFile = fileTasks.reduce((acc, t) => acc + (t.timeSpent ?? 0), 0);
-		const etcByday = todaysTasks().reduce((acc, t) => acc + (t.etc ?? 0), 0);
+		const etcByday = getTodaysTasks().reduce((acc, t) => acc + (t.etc ?? 0), 0);
 		this.setInstructions([
 			{command: "today etc:", purpose: etcByday.toString()},
 			{command: "file etc:", purpose: etcByFile.toString()},
@@ -27,24 +27,30 @@ export class TaskToggleModal extends SuggestModal<Task> {
 	}
 
 	async getSuggestions(query: string): Promise<any[]> {
-		const todayTasks = todaysTasks().filter((task) => task.phrase.toLowerCase().includes(query.toLowerCase()));
-		let createSuggestions = uniqueTasksByText()
-		createSuggestions = (createSuggestions.filter((task) => task.phrase?.toLowerCase()?.startsWith(query.toLowerCase())).slice(0, 10)) as any[];
-		const firstCompleteIndex = todayTasks.findIndex(t => t.status === Status.Complete);
-		todayTasks.splice(firstCompleteIndex, 0, ...createSuggestions as any);
-		return todayTasks;
+		const todaysTasks = getTodaysTasks().filter((task) => task.phrase.toLowerCase().includes(query.toLowerCase()));
+		let commonTasks = uniqueTasksByText()
+		commonTasks = commonTasks.filter((task) => {
+			const matchesQuery = task.phrase?.toLowerCase()?.startsWith(query.toLowerCase());
+			const textNotATaskToday = !todaysTasks.find(t => t.phrase == task.phrase);
+			return matchesQuery && textNotATaskToday;
+		});
+		const mostCommonMatching = commonTasks.slice(0, 5) as any[];
+		const firstCompleteIndex = todaysTasks.findIndex(t => t.status === Status.Complete);
+		todaysTasks.splice(firstCompleteIndex, 0, ...mostCommonMatching as any);
+		return todaysTasks;
 	}
 	
-	renderSuggestion(task: Task | TaskInserter, el: HTMLElement) {
+	renderSuggestion(task: Task | TaskSuggestion, el: HTMLElement) {
 		const text = task instanceof Task ? taskToSelect(task) : getReadablePhrase(task.phrase);
 		el.createEl("div", { text });
 	}
 
-	onChooseSuggestion(task: Task | TaskInserter) {
+	onChooseSuggestion(task: Task | TaskSuggestion) {
 		if (task instanceof Task) {
 			// consider: navigating to task page when choosing
 			changeTaskStatus(task, task.status == Status.Active ? Status.Inactive : Status.Active);
 		} else {
+			task.save();
 			// create task in appropriate place ... need to use mapper to make appropriate move maybe 
 		}
 	}

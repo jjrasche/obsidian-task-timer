@@ -1,7 +1,8 @@
-import * as settings from 'state/settings.state';
-import * as file from 'service/file.service';
-import * as date from 'service/date.service';
+import * as settings from '../state/settings.state';
+import * as file from '../service/file.service';
+import * as date from '../service/date.service';
 import { Platform } from 'obsidian';
+
 
 export const getLogFileName = () => `.obsidian/plugins/obsidian-task-timer/log(${Platform.isMobile ? 'mobile' : 'desktop'}).txt`;
 

@@ -1,5 +1,5 @@
 import { TFile } from "obsidian";
-import * as app from 'state/app.state';
+import * as app from '../state/app.state';
 
 
 /*
