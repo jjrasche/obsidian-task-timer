@@ -11,7 +11,7 @@ export class TaskSuggestion {
 	get paths(): string[] { return this.instances.map(t => t.path) }
 	get path(): string { return this.paths[0] }
 	get pastPaths(): string[] { return this.paths.splice(0, numiHistoryToCheck) }
-	get usuallyinDailies(): boolean { return this.pastPaths.reduce((acc, curr) => acc && curr.contains("Dailies"), true) }
+	get usuallyinDailies(): boolean { return this.pastPaths.reduce((acc, curr) => acc && curr.includes("Dailies"), true) }
 	get mostRecentPathsSame(): boolean { return new Set(this.pastPaths).size === 1 }
 	get headers(): string[] { return this.instances.map(t => t.header) }
 	get etc(): number[] { return this.instances.map(t => t.timeTaken).filter(etc => !!etc) as number[] }
@@ -23,10 +23,10 @@ export class TaskSuggestion {
 	}
 
 	equals(other: Task): boolean {
-		if (this.usuallyinDailies) {
+		// if (this.usuallyinDailies) {
 			return this.phrase === other.phrase && this.headers[0] === other.header;
-		}
-		return this.phrase === other.phrase;
+		// }
+		// return this.phrase === other.phrase;
 	}
 
 	convertToTask(path: string): Task {

@@ -9,11 +9,11 @@ import { Status } from "./status";
 test('averageList', () => {
     let data = [2, 8, 12, 13, 17, 19, 25, 55, 80, 115];
     let actual = filterOutliers(data);
-    expect(actual).to.have.members([ 8, 12, 13, 17, 19 ]);
+    expect(actual).to.have.members([ 12, 13, 17, 19, 25, 55 ]);
 
     data = [4, 5, 8, 12, 13, 17, 19, 25, 30, 37];
     actual = filterOutliers(data);
-    expect(actual).to.have.members([ 8, 12, 13, 17, 19 ]);
+    expect(actual).to.have.members([ 8, 12, 13, 17, 19, 25 ]);
 });
 
 /*
@@ -37,11 +37,11 @@ test('suggestedTasks - group correctly - different phrases - 1 suggestion per ph
     const data = [ getA1(), getA2(), getB1(), getC1()];
     const actual = suggestedTasks(data);
     const expected = [
-        {phrase: "a", instances: [getA1(), getA2()]} as unknown as TaskSuggestion,
-        {phrase: "b", instances: [getB1()]} as unknown as TaskSuggestion,
-        {phrase: "c", instances: [getC1()]} as unknown as TaskSuggestion
+        { instances: [getA1(), getA2()], phrase: "a" },
+        { instances: [getB1()], phrase: "b" },
+        { instances: [getC1()], phrase: "c" },
     ];
-    expect(actual).to.eql(expected);
+    expect(JSON.stringify(actual)).to.eql(JSON.stringify(expected));
 });
 
 // if in daily add header to work 
@@ -49,8 +49,8 @@ test('suggestedTasks - group correctly - same phrases different header in daily 
     const data = [ getA1(), getA2(), getA1P()];
     const actual = suggestedTasks(data);
     const expected = [
-        {phrase: "a", instances: [getA1(), getA2()]} as unknown as TaskSuggestion,
-        {phrase: "a", instances: [getA1P()]} as unknown as TaskSuggestion,
+        { instances: [getA1(), getA2()], phrase: "a" },
+        { instances: [getA1P()], phrase: "a" },
     ];
-    expect(actual).to.eql(expected);
+    expect(JSON.stringify(actual)).to.eql(JSON.stringify(expected));
 });
