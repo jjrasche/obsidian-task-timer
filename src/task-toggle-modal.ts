@@ -1,13 +1,15 @@
 import { Status } from "model/status";
 import { Task, getReadablePhrase, taskToSelect } from "model/task.model";
 import { SuggestModal } from "obsidian";
-import { allTasks, todaysTasks as getTodaysTasks, trackedTasks } from "service/data-view.service";
+import { todaysTasks as getTodaysTasks, trackedTasks } from "service/data-view.service";
 import { changeTaskStatus, saveSuggestion } from "./service/modify-task.service";
 import * as app from 'state/app.state';
 import { TaskSuggestion } from "./model/task-suggestion.model";
 import { suggestedTasks } from "./service/suggested-task.service";
 
 export class TaskToggleModal extends SuggestModal<Task> {
+	commonTasks: TaskSuggestion[];
+	todaysTasks: Task[];
 
 	constructor() {
 		super(app.get());
@@ -16,7 +18,11 @@ export class TaskToggleModal extends SuggestModal<Task> {
 		// );
 		const file = app.get().workspace.getActiveFile();        
         if (!file) throw new Error("no file active");
-		const fileTasks = trackedTasks().filter(t => t.path == file.path && t.status != Status.Complete);
+
+		const tasks = trackedTasks();
+		this.todaysTasks = getTodaysTasks();
+		this.commonTasks = suggestedTasks(tasks);
+		const fileTasks = tasks.filter(t => t.path == file.path && t.status != Status.Complete);
 		const etcByFile = fileTasks.reduce((acc, t) => acc + (t.etc ?? 0), 0);
 		const timeByFile = fileTasks.reduce((acc, t) => acc + (t.timeSpent ?? 0), 0);
 		const etcByday = getTodaysTasks().reduce((acc, t) => acc + (t.etc ?? 0), 0);
@@ -28,9 +34,8 @@ export class TaskToggleModal extends SuggestModal<Task> {
 	}
 
 	async getSuggestions(query: string): Promise<any[]> {
-		const todaysTasks = getTodaysTasks().filter((task) => task.phrase.toLowerCase().includes(query.toLowerCase()));
-		let commonTasks = suggestedTasks(allTasks());
-		commonTasks = commonTasks.filter((task) => {
+		const todaysTasks = this.todaysTasks.filter((task) => task.phrase.toLowerCase().includes(query.toLowerCase()));
+		const commonTasks = this.commonTasks.filter((task) => {
 			const matchesQuery = task.phrase?.toLowerCase()?.startsWith(query.toLowerCase());
 			const textNotATaskToday = !todaysTasks.find(t => t.phrase == task.phrase);
 			return matchesQuery && textNotATaskToday;
@@ -42,10 +47,7 @@ export class TaskToggleModal extends SuggestModal<Task> {
 	}
 	
 	renderSuggestion(task: Task | TaskSuggestion, el: HTMLElement) {
-		if (task instanceof TaskSuggestion) {
-			task.convertToTask(task.fileToSaveIn() ?? "");
-		}
-		const text = taskToSelect(task as Task);
+		const text = task instanceof Task ? taskToSelect(task) : getReadablePhrase(task.phrase);
 		el.createEl("div", { text });
 	}
 
