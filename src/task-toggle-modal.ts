@@ -40,7 +40,8 @@ export class TaskToggleModal extends SuggestModal<Task> {
 			const textNotATaskToday = !todaysTasks.find(t => t.phrase == task.phrase);
 			return matchesQuery && textNotATaskToday;
 		});
-		const mostCommonMatching = commonTasks.slice(0, 5) as any[];
+		const mostCommonMatching = this.appendHeaderIfNonUniquePhrases(JSON.parse(JSON.stringify(commonTasks.slice(0, 5))));
+
 		const firstCompleteIndex = todaysTasks.findIndex(t => t.status === Status.Complete);
 		todaysTasks.splice(firstCompleteIndex, 0, ...mostCommonMatching as any);
 		return todaysTasks;
@@ -59,5 +60,16 @@ export class TaskToggleModal extends SuggestModal<Task> {
 			saveSuggestion(task);
 			// create task in appropriate place ... need to use mapper to make appropriate move maybe 
 		}
+	}
+
+	appendHeaderIfNonUniquePhrases(suggestions: TaskSuggestion[]): TaskSuggestion[] {
+		const nonUniquePhrases = suggestions.reduce((acc: string[], s) => {
+			if (suggestions.filter(i => s.phrase == i.phrase).length > 1) {
+				acc.push(s.phrase);
+			}
+			return acc;
+		}, []);
+		suggestions.filter(s => nonUniquePhrases.contains(s.phrase)).forEach(s => s.phrase += ` - ${s.instances[0].header}`);
+		return suggestions;
 	}
 }

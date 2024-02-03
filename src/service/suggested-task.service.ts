@@ -11,8 +11,10 @@ export const suggestedTasks = (tasks: Task[]): TaskSuggestion[] => {
         }
         return acc;
     }, [])
+
+    const commonUniqueTasks = uniqueTasks.filter(t => t.instances.length > 2);
     
-    return uniqueTasks.sort((a: TaskSuggestion, b: TaskSuggestion) => {
+    return commonUniqueTasks.sort((a: TaskSuggestion, b: TaskSuggestion) => {
         if (b.instances.length != a.instances.length) {
             return b.instances.length - a.instances.length;
         } else {
