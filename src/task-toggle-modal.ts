@@ -1,10 +1,11 @@
 import { Status } from "model/status";
-import { Task, getReadablePhrase, orderTasks, taskToSelect } from "model/task.model";
-import { Instruction, SuggestModal } from "obsidian";
-import { todaysTasks as getTodaysTasks, trackedTasks, uniqueTasksByText } from "service/data-view.service";
-import { changeTaskStatus } from "./service/modify-task.service";
+import { Task, getReadablePhrase, taskToSelect } from "model/task.model";
+import { SuggestModal } from "obsidian";
+import { allTasks, todaysTasks as getTodaysTasks, trackedTasks } from "service/data-view.service";
+import { changeTaskStatus, saveSuggestion } from "./service/modify-task.service";
 import * as app from 'state/app.state';
 import { TaskSuggestion } from "./model/task-suggestion.model";
+import { suggestedTasks } from "./service/suggested-task.service";
 
 export class TaskToggleModal extends SuggestModal<Task> {
 
@@ -28,7 +29,7 @@ export class TaskToggleModal extends SuggestModal<Task> {
 
 	async getSuggestions(query: string): Promise<any[]> {
 		const todaysTasks = getTodaysTasks().filter((task) => task.phrase.toLowerCase().includes(query.toLowerCase()));
-		let commonTasks = uniqueTasksByText()
+		let commonTasks = suggestedTasks(allTasks());
 		commonTasks = commonTasks.filter((task) => {
 			const matchesQuery = task.phrase?.toLowerCase()?.startsWith(query.toLowerCase());
 			const textNotATaskToday = !todaysTasks.find(t => t.phrase == task.phrase);
@@ -41,7 +42,10 @@ export class TaskToggleModal extends SuggestModal<Task> {
 	}
 	
 	renderSuggestion(task: Task | TaskSuggestion, el: HTMLElement) {
-		const text = task instanceof Task ? taskToSelect(task) : getReadablePhrase(task.phrase);
+		if (task instanceof TaskSuggestion) {
+			task.convertToTask(task.fileToSaveIn() ?? "");
+		}
+		const text = taskToSelect(task as Task);
 		el.createEl("div", { text });
 	}
 
@@ -50,7 +54,7 @@ export class TaskToggleModal extends SuggestModal<Task> {
 			// consider: navigating to task page when choosing
 			changeTaskStatus(task, task.status == Status.Active ? Status.Inactive : Status.Active);
 		} else {
-			task.save();
+			saveSuggestion(task);
 			// create task in appropriate place ... need to use mapper to make appropriate move maybe 
 		}
 	}

@@ -3,9 +3,11 @@ export const filterOutliers = (values: number[]): number[] => {
 	const quartile1 = sorted[Math.floor(sorted.length / 4)];
 	const quartile3 = sorted[Math.floor(3 * sorted.length / 4)];
 	const iqr = quartile3 - quartile1;
-  
+	const lowBoundary = quartile1 - 1.5 * iqr;
+	const highBoundary = quartile3 + 1.5 * iqr;
+	// todo find a way to tighten these outliers, seems like I should use grouping over stats
 	const filtered = values.filter(num => {
-	  return (num >= quartile1 - 1.5 * iqr) && (num <= quartile3 + 1.5 * iqr);
+	  return (num >= lowBoundary) && (num <= highBoundary);
 	});
     
 	return filtered;

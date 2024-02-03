@@ -1,10 +1,11 @@
 import { Status } from "../model/status"
 import { Task, taskToLine } from "../model/task.model";
-import { Editor } from "obsidian"
+import { Editor, Notice } from "obsidian"
 import * as log from './logging.service';
 import * as statusBar from './status-bar.service';
 import * as file from "./file.service";
 import { getTaskByCursor, todaysTasks } from "./data-view.service";
+import { TaskSuggestion } from "../model/task-suggestion.model";
 
 export const updateTaskFromEditor = async (editor: Editor, status: Status) => {
     const task = getTaskByCursor(editor);
@@ -29,6 +30,22 @@ export const changeTaskStatus = async (task: Task, status: Status) => {
     await saveTaskLine(task, updateTaskLine);
     statusBar.initialize();
     // consider need to update allTasks or can I trigger data view refresh???
+}
+
+export const saveSuggestion = async (suggestion: TaskSuggestion) => {
+    const fileName = suggestion.fileToSaveIn();
+    const header = suggestion.headerToSaveUnder();
+    // assuming original tasks are under header, might want to change behavior later
+    if (!!fileName && header) {
+        const task = suggestion.convertToTask(fileName);
+        const modifier = async (task: Task, lines: string[]): Promise<string[]> => {
+            await inactivateAllActiveTasks();
+            return addTaskLine(header, task, lines);
+        }
+        await saveTaskLine(task, modifier);
+    } else {
+        new Notice(`attempted to save suggestion ${suggestion.phrase} in file ${fileName} under header ${header}`);
+    }
 }
 
 const updateTaskLine = async (task: Task, lines: string[]): Promise<string[]> => {
