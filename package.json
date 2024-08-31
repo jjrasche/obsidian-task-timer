@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-task-timer",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "Obsidian plugin providing commands/tools to maintain time metadata and visauls to interpret this data",
 	"main": "main.js",
 	"scripts": {

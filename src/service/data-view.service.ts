@@ -16,10 +16,13 @@ export const api = (): DataviewApi => {
 // todo: cash task data and pull only when files with etc tasks have changed... adds overhead, but "getTaskByCursor" is taking 100ms!
 
 export const ready = (): boolean => !!api() && !!api().pages() && api().pages().length > 0;
-export const allTasks = (): STask[] => [...api().pages().file.tasks]
+export const allStasks = (): STask[] => [...api().pages().file.tasks]
 
-// todo: consider making the is a tracked task qualifier /d:\:[0-9{6}]\s/
-export const trackedTasks = (): Task[] => allTasks()
+export const allTasks = (path: string = ""): Task[] => allStasks()
+    .filter((t: STask) => path.length > 0 && t.path.contains(path))
+    .map((stask: STask) => staskToTask(stask));
+
+export const trackedTasks = (): Task[] => allStasks()
     .filter((t: STask) => /d\:[0-9]{6}/.test(t.text))
     .map((stask: STask) => staskToTask(stask));
 
@@ -32,7 +35,7 @@ export const managedTaskFiles = (): string[] => todaysTasks().map(t => t.path);
 export const getTaskByCursor = (editor: Editor): Task => {
     const line = editor.getCursor().line;
     const path = app.get().workspace.getActiveFile()?.path;
-    const tasks = allTasks();
+    const tasks = allStasks();
     const sTask = tasks.find(stask => stask.path == path && stask.line == line);
     if (!sTask) {
         const fromObsidianPlugin = (app.get() as any).plugins.plugins["dataview"].api.pages().file.tasks;

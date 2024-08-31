@@ -32,7 +32,7 @@ export class TaskSuggestion {
 	convertToTask(path: string): Task {
 		const task = new Task();
 		task.path = path;
-		task.phrase = this.usuallyinDailies ? `${this.phrase} (${this.headers[0]})` : this.phrase;
+		task.phrase = this.phrase;
 		task.status = Status.Active;
 		task.etc = Math.floor(averageNumbersNoOutliers(this.etc.slice(0, 15)));
 		task.setStartTime();

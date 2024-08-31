@@ -35,12 +35,13 @@ export class TaskToggleModal extends SuggestModal<Task> {
 
 	async getSuggestions(query: string): Promise<any[]> {
 		const todaysTasks = this.todaysTasks.filter((task) => task.phrase.toLowerCase().includes(query.toLowerCase()));
+		this.commonTasks.forEach(t => (t as any).display = null);
 		const commonTasks = this.commonTasks.filter((task) => {
 			const matchesQuery = task.phrase?.toLowerCase()?.startsWith(query.toLowerCase());
 			const textNotATaskToday = !todaysTasks.find(t => t.phrase == task.phrase);
 			return matchesQuery && textNotATaskToday;
 		});
-		const mostCommonMatching = this.appendHeaderIfNonUniquePhrases(JSON.parse(JSON.stringify(commonTasks.slice(0, 5))));
+		const mostCommonMatching = this.appendHeaderIfNonUniquePhrases(commonTasks.slice(0, 5));
 
 		const firstCompleteIndex = todaysTasks.findIndex(t => t.status === Status.Complete);
 		todaysTasks.splice(firstCompleteIndex, 0, ...mostCommonMatching as any);
@@ -48,16 +49,16 @@ export class TaskToggleModal extends SuggestModal<Task> {
 	}
 	
 	renderSuggestion(task: Task | TaskSuggestion, el: HTMLElement) {
-		const text = task instanceof Task ? taskToSelect(task) : getReadablePhrase(task.phrase);
+		const text = task instanceof Task ? taskToSelect(task) : getReadablePhrase((task as any).display ?? task.phrase);
 		el.createEl("div", { text });
 	}
 
-	onChooseSuggestion(task: Task | TaskSuggestion) {
+	async onChooseSuggestion(task: Task | TaskSuggestion) {
 		if (task instanceof Task) {
 			// consider: navigating to task page when choosing
 			changeTaskStatus(task, task.status == Status.Active ? Status.Inactive : Status.Active);
-		} else {
-			saveSuggestion(task);
+		} else {	
+			await saveSuggestion(task);
 			// create task in appropriate place ... need to use mapper to make appropriate move maybe 
 		}
 	}
@@ -69,7 +70,7 @@ export class TaskToggleModal extends SuggestModal<Task> {
 			}
 			return acc;
 		}, []);
-		suggestions.filter(s => nonUniquePhrases.contains(s.phrase)).forEach(s => s.phrase += ` - ${s.instances[0].header}`);
+		suggestions.filter(s => nonUniquePhrases.contains(s.phrase)).forEach(s => (s as any).display = `${s.phrase} - ${s.instances[0].header}`);
 		return suggestions;
 	}
 }

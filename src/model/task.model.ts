@@ -1,4 +1,4 @@
-import { STask } from "obsidian-dataview";
+import { STask, Link } from "obsidian-dataview";
 import { Status, StatusIndicator, StatusWord, indicatorToStatus } from "./status";
 import { convertSimpleDate, sameDay, simpleDate, simpleDisplayDate, simpleDisplayTime, simpleTime } from "../service/date.service";
 
@@ -6,7 +6,7 @@ export class Task {
 	phrase: string;
 	originalStatus: string;
 	tabs: string = "";
-	link?: string;
+	phraseLink?: string;
 	status: Status;
 	timeTaken?: number;
 	etc?: number;
@@ -14,12 +14,16 @@ export class Task {
 	path: string;
 	line: number;
 	header: string;
+	link: Link;
+	tags: string[];
+	text: string;
+	subTasks: string[];
 
 	constructor(task: Task = {} as Task) {
 		this.phrase = task.phrase ?? this.phrase;
 		this.originalStatus = task.originalStatus ?? this.originalStatus;
 		this.tabs = task.tabs ?? this.tabs;
-		this.link = task.link ?? this.link;
+		this.phraseLink = task.phraseLink ?? this.phraseLink;
 		this.status = task.status ?? this.status;
 		this.timeTaken = task.timeTaken ?? this.timeTaken;
 		this.etc = task.etc ?? this.etc;
@@ -27,6 +31,9 @@ export class Task {
 		this.path = task.path ?? this.path;
 		this.line = task.line ?? this.line;
 		this.header = task.header ?? this.header;
+		this.tags = task.tags ?? this.tags;
+		this.text = task.text ?? this.text;
+		this.subTasks = task.subTasks ?? this.subTasks;
 	}
 	get now() { return new Date().getTime(); }
 
@@ -42,7 +49,7 @@ export class Task {
 	}
 
 	get timeLeft() {
-		if (!!this.etc) {
+		if (!!this.etc && this.timeSpent < this.etc) {
 			return this.etc - this.timeSpent;
 		}
 		return 0;
@@ -59,28 +66,23 @@ export class Task {
 	}
 	
 	get displayString() { 
-		return `{'phrase':'${this.phrase}', 'originalStatus':'${this.originalStatus}', 'tabs':'${this.tabs}', 'link':'${this.link}', 'status':'${this.status}', 'timeTaken':'${this.timeTaken}', 'etc':'${this.etc}', 'startTime':'${this.startTime}', 'path':'${this.path}', 'line':'${this.line}}'`;
+		return `{'phrase':'${this.phrase}', 'originalStatus':'${this.originalStatus}', 'tabs':'${this.tabs}', 'link':'${this.phraseLink}', 'status':'${this.status}', 'timeTaken':'${this.timeTaken}', 'etc':'${this.etc}', 'startTime':'${this.startTime}', 'path':'${this.path}', 'line':'${this.line}}'`;
 	}
 
 	get readablePhrase() {
 		return `${getReadablePhrase(this.phrase)} (${this.timeLeft})`;
+	}
+	
+	get isWork() {
+		return (this.path.contains("resource/Dailies") && this.header == "Work") || 
+			this.path.contains("work tickets") ||
+			this.path.contains("resource/sprints")
 	}
 
 	setStartTime() {
 		this.startTime = new Date();
 	}
 
-	get area() {
-		if (this.path.startsWith("area/")) {
-			return this.path.split("/")[1];
-		}
-	}
-
-	get isWork() {
-		return (this.path.contains("resource/Dailies") && this.header == "Work") ||
-			(this.area == "work tickets") ||
-			(this.area == "sprints")
-	}
 }
 
 export function getReadablePhrase(phrase: string) {
@@ -97,6 +99,8 @@ export function getReadablePhrase(phrase: string) {
 export const staskToTask = (stask: STask): Task => {
 	if (!stask) throw Error("staskToTask: stask is undefined");
 	let task = new Task();
+	task.text = stask.text;
+	task.subTasks = stask.subTasks;
 	let text = stask.text.split("\n")[0];
 	task.path = stask.path;
 	task.header = stask.header?.subpath;
@@ -105,10 +109,12 @@ export const staskToTask = (stask: STask): Task => {
 	[text, task.startTime] = [...pullStart(text)]; 
 	[text, task.etc] = [...pullEtc(text)]; 
 	[text, task.timeTaken] = [...pullTimeTaken(text)]; 
-	[text, task.link] = [...pullLink(text)]; 
+	[text, task.phraseLink] = [...pullPhraseLink(text)]; 
 	task.phrase = text;
 	task.originalStatus = stask.status;
 	task.status = indicatorToStatus(stask.status);
+	task.link = stask.link;
+	task.tags = stask.tags;
 	return task;
 }
 // why is this saving ot of order etc first?
@@ -117,7 +123,7 @@ export const taskToLine = (task: Task): string => {
 	const s = !!task.startTime ? " s:" + simpleTime(task.startTime) : "";
 	const e = !!task.etc ? " etc:" + task.etc : "";
 	const t = !!task.timeTaken ? " t:" + task.timeTaken : "";
-	const link = !!task.link ? " " + task.link : "";
+	const link = !!task.phraseLink ? " " + task.phraseLink : "";
 	return `${task.tabs}- [${StatusIndicator[task.status]}] ${task.phrase}${d}${s}${e}${t}${link}`;
 }
 // `A 18:00 (-14) blah`
@@ -140,9 +146,9 @@ export const pullStart = (str: string): [string, Date?] => {
 	[str, t]  = pullMetadata(str, /s\:[0-9]{3,4}/g);
 	return [str, d ? convertSimpleDate(d, t) : undefined];
 }
-export const pullEtc = (str: string) => pullMetadataNumber(str, /etc\:[0-9]{1,3}/g)
-export const pullTimeTaken = (str: string) => pullMetadataNumber(str, /t\:[0-9]{1,3}/g);
-export const pullLink = (str: string) => pullMetadata(str, /\^[a-z0-9]{6}$/g, (str) => str);
+export const pullEtc = (str: string) => pullMetadataNumber(str, /\setc\:[0-9]{1,3}/g)
+export const pullTimeTaken = (str: string) => pullMetadataNumber(str, /\st\:[0-9]{1,3}/g);
+export const pullPhraseLink = (str: string) => pullMetadata(str, /\^[a-z0-9]{6}$/g, (str) => str);
 
 export const pullMetadataNumber = (str: string, regexp: RegExp): [string, number?] => {
 	let n;
@@ -152,7 +158,7 @@ export const pullMetadataNumber = (str: string, regexp: RegExp): [string, number
 export const pullMetadata = (str: string, regexp: RegExp, formatRet = (str: string) => str.split(":")[1]): [string, string?] => {
 	const array = [...str.matchAll(regexp)];
 	if (array.length > 1) {
-		throw new Error(`had ${array.length} instances matching`)
+		throw new Error(`had ${array.length} instances matching\n${str}`);
 	}
 	str = str.replace(regexp, "").trim();
 	try {

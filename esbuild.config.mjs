@@ -17,10 +17,10 @@ let entry_point;
 let outfile;
 if (!test_build) {
     entry_point = 'src/main.ts';
-    outfile = 'C:/Users/rasche_j/Documents/everything/.obsidian/plugins/obsidian-task-timer/main.js';
+    outfile = 'C:/Users/rasche_j/Documents/secondBrain/.obsidian/plugins/obsidian-task-timer/main.js';
 } else {
     entry_point = 'tests/main.test.ts';
-    outfile = 'C:/Users/rasche_j/Documents/everything/.obsidian/plugins/obsidian-task-timer/main.js'; // haven't found a way for obsidian to load main.test.js too
+    outfile = 'C:/Users/rasche_j/Documents/secondBrain/.obsidian/plugins/obsidian-task-timer/main.js'; // haven't found a way for obsidian to load main.test.js too
 }
 
 

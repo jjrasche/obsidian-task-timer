@@ -1,7 +1,7 @@
 {
 	"id": "obsidian-task-timer",
 	"name": "Task Timer",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "Obsidian plugin storing data related to time actively spent on tasks, offering hotkey access to mark current task active",
 	"author": "Jim Rasche",
 	"authorUrl": "https://github.com/jjrasche/obsidian-task-tracking",

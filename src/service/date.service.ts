@@ -1,3 +1,6 @@
+export const formatDate = (date: Date): string => {
+  return `${date.getFullYear() % 2000}-${date.getMonth() < 9 ? '0' : ''}${date.getMonth()+1}-${date.getDate() < 10 ? '0' : ''}${date.getDate()}`;
+}
 export function now (): Date { return new Date() }
 export function nowIso (): string { return now().toISOString() }
 export const readableNow = (): string => readable(now());
